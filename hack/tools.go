@@ -23,14 +23,19 @@ import (
 	_ "k8s.io/code-generator"
 	_ "knative.dev/hack"
 
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
+
 	// codegen: hack/generate-knative.sh
 	_ "knative.dev/pkg/hack"
 
-	_ "k8s.io/code-generator/cmd/client-gen"
-	_ "k8s.io/code-generator/cmd/deepcopy-gen"
-	_ "k8s.io/code-generator/cmd/defaulter-gen"
-	_ "k8s.io/code-generator/cmd/informer-gen"
-	_ "k8s.io/code-generator/cmd/lister-gen"
-	_ "k8s.io/kube-openapi/cmd/openapi-gen"
-	_ "knative.dev/pkg/codegen/cmd/injection-gen"
+	_ "knative.dev/networking/test/conformance/ingress"
+	_ "knative.dev/networking/test/test_images/grpc-ping"
+	_ "knative.dev/networking/test/test_images/httpproxy"
+	_ "knative.dev/networking/test/test_images/retry"
+	_ "knative.dev/networking/test/test_images/runtime"
+	_ "knative.dev/networking/test/test_images/timeout"
+	_ "knative.dev/networking/test/test_images/wsserver"
+
+	// networking resource
+	_ "knative.dev/networking/config"
 )
