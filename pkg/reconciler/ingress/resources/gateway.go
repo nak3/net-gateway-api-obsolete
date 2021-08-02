@@ -47,8 +47,7 @@ func MakeGateway(
 ) (*gwv1alpha1.Gateway, error) {
 
 	gatewayConfig := config.FromContext(ctx).Gateway
-	visibility := Visibility(rule.Visibility)
-	gatewayNamespace := gatewayConfig.LookupGatewayNamespace(visibility)
+	gatewayNamespace := gatewayConfig.LookupGatewayNamespace(rule.Visibility)
 	if gatewayNamespace == "" {
 		gatewayNamespace = ing.Namespace
 	}
@@ -94,12 +93,11 @@ func makeGatewaySpec(
 			Routes:   route})
 	}
 
-	visibility := Visibility(rule.Visibility)
 	gwSpec := gwv1alpha1.GatewaySpec{
-		GatewayClassName: gwConfig.LookupGatewayClass(visibility),
+		GatewayClassName: gwConfig.LookupGatewayClass(rule.Visibility),
 		Listeners:        listeners,
 	}
-	if ad := gwConfig.LookupAddress(visibility); ad != "" {
+	if ad := gwConfig.LookupAddress(rule.Visibility); ad != "" {
 		gwSpec.Addresses = []gwv1alpha1.GatewayAddress{{Type: gwv1alpha1.NamedAddressType, Value: ad}}
 	}
 	return gwSpec

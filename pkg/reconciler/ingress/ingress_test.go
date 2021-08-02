@@ -93,9 +93,9 @@ var (
 	defaultConfig = &config.Config{
 		Network: &network.Config{},
 		Gateway: &config.Gateway{
-			Gateways: map[string]*config.GatewayConfig{
-				"default": {},
-				"cluster-local": {
+			Gateways: map[v1alpha1.IngressVisibility]*config.GatewayConfig{
+				v1alpha1.IngressVisibilityExternalIP: {},
+				v1alpha1.IngressVisibilityClusterLocal: {
 					Address: "knative-local-gateway.istio-system",
 				}},
 		},

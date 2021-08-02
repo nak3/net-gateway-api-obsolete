@@ -17,10 +17,14 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/yaml"
 
-	"knative.dev/pkg/configmap"
+	"knative.dev/networking/pkg/apis/networking/v1alpha1"
+	//	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/network"
 )
 
@@ -33,13 +37,12 @@ const (
 	// DefaultGatewayClass is the gatewayclass name for the gateway.
 	DefaultGatewayClass = "istio"
 
-	// DefaultVisibilityKey is the key for config-gateway for the gateway configuration.
-	DefaultVisibilityKey = "default"
-
 	// DefaultIstioNamespace is the default namespace for the gateway.
 	// The namespace of the gateway should not be required,
 	// but gateway-api with Istio needs to deploy Gateway in the same namespace with istio service.
 	DefaultIstioNamespace = "istio-system"
+
+	visibilityConfigKey = "visibility"
 )
 
 var (
@@ -64,40 +67,57 @@ type Gateway struct {
 	// labels matching a particular selector, it will use the
 	// corresponding gateway.  If multiple selectors match, we choose
 	// the most specific selector.
-	Gateways map[string]*GatewayConfig
+	Gateways map[v1alpha1.IngressVisibility]*GatewayConfig
 }
 
 // NewGatewayFromConfigMap creates a Gateway from the supplied ConfigMap
 func NewGatewayFromConfigMap(configMap *corev1.ConfigMap) (*Gateway, error) {
-	c := Gateway{Gateways: map[string]*GatewayConfig{}}
-	for k, v := range configMap.Data {
-		if k == configmap.ExampleKey {
-			continue
-		}
-		if k == DefaultVisibilityKey {
-			k = ""
-		}
-		config := &GatewayConfig{}
-		err := yaml.Unmarshal([]byte(v), config)
-		if err != nil {
-			return nil, err
-		}
-		c.Gateways[k] = config
-	}
-	// Add default gateway if empty key is not defined.
-	if _, ok := c.Gateways[""]; !ok {
-		c.Gateways[""] = &GatewayConfig{GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultPublicGatewayService}
+	v, ok := configMap.Data[visibilityConfigKey]
+	if !ok {
+		// These are the defaults.
+		return &Gateway{
+			Gateways: map[v1alpha1.IngressVisibility]*GatewayConfig{
+				v1alpha1.IngressVisibilityExternalIP:   {GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultPublicGatewayService},
+				v1alpha1.IngressVisibilityClusterLocal: {GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultLocalGatewayService},
+			},
+		}, nil
 	}
 
-	// Add default local gateway if cluster-local gateway is not defined.
-	if _, ok := c.Gateways["cluster-local"]; !ok {
-		c.Gateways["cluster-local"] = &GatewayConfig{GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultLocalGatewayService}
+	entry := make(map[v1alpha1.IngressVisibility]GatewayConfig)
+	if err := yaml.Unmarshal([]byte(v), &entry); err != nil {
+		return nil, err
+	}
+
+	for _, vis := range []v1alpha1.IngressVisibility{
+		v1alpha1.IngressVisibilityClusterLocal,
+		v1alpha1.IngressVisibilityExternalIP,
+	} {
+		if _, ok := entry[vis]; !ok {
+			return nil, fmt.Errorf("visibility must contain %q with class and service", vis)
+		}
+	}
+	c := Gateway{Gateways: map[v1alpha1.IngressVisibility]*GatewayConfig{}}
+
+	for key, value := range entry {
+		key, value = key, value
+		// Check that the visibility makes sense.
+		switch key {
+		case v1alpha1.IngressVisibilityClusterLocal, v1alpha1.IngressVisibilityExternalIP:
+		default:
+			return nil, fmt.Errorf("unrecognized visibility: %q", key)
+		}
+
+		// See if the Service is a valid namespace/name token.
+		if _, _, err := cache.SplitMetaNamespaceKey(value.Address); err != nil {
+			return nil, err
+		}
+		c.Gateways[key] = &value
 	}
 	return &c, nil
 }
 
 // LookupGatewayNamespace returns a gateway namespace given a visibility config.
-func (c *Gateway) LookupGatewayNamespace(visibility string) string {
+func (c *Gateway) LookupGatewayNamespace(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
 		return ""
 	}
@@ -105,7 +125,7 @@ func (c *Gateway) LookupGatewayNamespace(visibility string) string {
 }
 
 // LookupGatewayClass returns a gatewayclass given a visibility config.
-func (c *Gateway) LookupGatewayClass(visibility string) string {
+func (c *Gateway) LookupGatewayClass(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
 		// TODO: empty gatewayclass should be error?
 		return ""
@@ -115,7 +135,7 @@ func (c *Gateway) LookupGatewayClass(visibility string) string {
 
 // LookupAddress returns a gateway address given a visibility config.
 // TODO: LookupGatewayServiceAddress ?
-func (c *Gateway) LookupAddress(visibility string) string {
+func (c *Gateway) LookupAddress(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
 		return ""
 	}

@@ -92,9 +92,8 @@ func (c *Reconciler) reconcileGateway(
 ) (*gwv1alpha1.Gateway, error) {
 	recorder := controller.GetEventRecorder(ctx)
 
-	visibility := resources.Visibility(rule.Visibility)
 	gatewayConfig := config.FromContext(ctx).Gateway
-	ns := gatewayConfig.LookupGatewayNamespace(visibility)
+	ns := gatewayConfig.LookupGatewayNamespace(rule.Visibility)
 	if ns == "" {
 		ns = ing.Namespace
 	}

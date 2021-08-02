@@ -10,7 +10,7 @@ Knative Gateway API Controller is a controller to generate Gateway resources bas
 #### Deploy net-gateway-api CRD
 
 ```
-kubectl apply -k 'github.com/kubernetes-sigs/net-gateway-api/config/crd?ref=v0.2.0'
+kubectl apply -f config/100-gateway-api.yaml
 ```
 
 #### Install Istio (v1.10 or later)
@@ -19,10 +19,16 @@ kubectl apply -k 'github.com/kubernetes-sigs/net-gateway-api/config/crd?ref=v0.2
 istioctl install -y
 ```
 
+If you want to use NodePort:
+
+```
+istioctl install -y --set values.gateways.istio-ingressgateway.type=NodePort
+```
+
 #### Install net-gateway-api controller
 
 ```
-ko resolve -f test/config/ -f config/ | kubectl apply -f -
+ko resolve -f config/ | kubectl apply -f -
 ```
 
 #### Install Knative Serving

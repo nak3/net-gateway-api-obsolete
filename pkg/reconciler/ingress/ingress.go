@@ -150,10 +150,10 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 		gatewayConfig := config.FromContext(ctx).Gateway
 
 		publicLbs := []v1alpha1.LoadBalancerIngressStatus{
-			{DomainInternal: gatewayConfig.LookupAddress("")},
+			{DomainInternal: gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityExternalIP)},
 		}
 		privateLbs := []v1alpha1.LoadBalancerIngressStatus{
-			{DomainInternal: gatewayConfig.LookupAddress("cluster-local")},
+			{DomainInternal: gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityClusterLocal)},
 		}
 
 		ing.Status.MarkLoadBalancerReady(publicLbs, privateLbs)

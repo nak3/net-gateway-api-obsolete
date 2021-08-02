@@ -54,7 +54,7 @@ type gatewayPodTargetLister struct {
 
 func (l *gatewayPodTargetLister) ListProbeTargets(ctx context.Context, ing *v1alpha1.Ingress) ([]status.ProbeTarget, error) {
 	gatewayConfig := config.FromContext(ctx).Gateway
-	svc := strings.Split(gatewayConfig.LookupAddress("cluster-local"), ".")
+	svc := strings.Split(gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityClusterLocal), ".")
 	if len(svc) < 2 {
 		return nil, fmt.Errorf("failed to parse service")
 	}

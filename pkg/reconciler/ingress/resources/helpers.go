@@ -23,7 +23,7 @@ import (
 	gwv1alpha1 "sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
-// Visibility coverts netv1alpha1.IngressVisibility to string.
+// Visibility converts netv1alpha1.IngressVisibility to string.
 func Visibility(visibility netv1alpha1.IngressVisibility) string {
 	switch visibility {
 	case netv1alpha1.IngressVisibilityClusterLocal:
