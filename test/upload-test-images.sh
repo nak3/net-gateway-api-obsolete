@@ -30,7 +30,8 @@ function upload_test_images() {
 
     for yaml in $(find ${image_dir} -name '*.yaml'); do
       # Rewrite image reference to use vendor.
-      sed "s@knative.dev/networking@knative.dev/net-ingressv2/vendor/knative.dev/networking@g" $yaml \
+      #TODO: DO_NOT_SUBMIT
+      sed "s@knative.dev/networking@github.com/nak3/net-gateway-api/vendor/knative.dev/networking@g" $yaml \
         `# ko resolve is being used for the side-effect of publishing images,` \
         `# so the resulting yaml produced is ignored.` \
         | ko resolve ${tag_option} -RBf- > /dev/null

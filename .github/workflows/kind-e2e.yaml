@@ -13,7 +13,7 @@ on:
 defaults:
   run:
     shell: bash
-    working-directory: ./src/knative.dev/net-ingressv2
+    working-directory: ./src/github.com/nak3/net-gateway-api
 
 jobs:
   e2e-tests:
@@ -73,7 +73,7 @@ jobs:
     - name: Check out code onto GOPATH
       uses: actions/checkout@v2
       with:
-        path: ./src/knative.dev/net-ingressv2
+        path: ./src/github.com/nak3/net-gateway-api
 
     - name: Install KinD
       run: |
@@ -181,13 +181,11 @@ jobs:
 
         # Run the tests tagged as e2e on the KinD cluster.
         # go test -race -count=1 -short -timeout=20m -tags=e2e ${{ matrix.test-suite }} \
-        # -run "TestIngressConformance/(basic|grpc|hosts|timeout|websocket|ingressclass)" \
         go test -race -count=1 -parallel=1 -short -timeout=20m -tags=e2e \
            ${{ matrix.test-suite }} \
            --enable-alpha --enable-beta \
            --ingressendpoint="${IPS[0]}" \
            --ingressClass=gateway-api.ingress.networking.knative.dev \
-           --skip-tests="tls" \
            --cluster-suffix=$CLUSTER_SUFFIX
 
 #    - name: Post failure notice to Slack
