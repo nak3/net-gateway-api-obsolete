@@ -836,7 +836,9 @@ knative.dev/networking/pkg/client/informers/externalversions/networking/v1alpha1
 knative.dev/networking/pkg/client/injection/client
 knative.dev/networking/pkg/client/injection/client/fake
 knative.dev/networking/pkg/client/injection/informers/factory
+knative.dev/networking/pkg/client/injection/informers/factory/fake
 knative.dev/networking/pkg/client/injection/informers/networking/v1alpha1/ingress
+knative.dev/networking/pkg/client/injection/informers/networking/v1alpha1/ingress/fake
 knative.dev/networking/pkg/client/injection/reconciler/networking/v1alpha1/ingress
 knative.dev/networking/pkg/client/listers/networking/v1alpha1
 knative.dev/networking/pkg/ingress
@@ -864,7 +866,9 @@ knative.dev/pkg/changeset
 knative.dev/pkg/client/injection/kube/client
 knative.dev/pkg/client/injection/kube/client/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/endpoints
+knative.dev/pkg/client/injection/kube/informers/core/v1/endpoints/fake
 knative.dev/pkg/client/injection/kube/informers/factory
+knative.dev/pkg/client/injection/kube/informers/factory/fake
 knative.dev/pkg/codegen/cmd/injection-gen
 knative.dev/pkg/codegen/cmd/injection-gen/args
 knative.dev/pkg/codegen/cmd/injection-gen/generators

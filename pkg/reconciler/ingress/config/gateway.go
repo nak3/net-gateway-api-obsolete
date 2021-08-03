@@ -99,7 +99,7 @@ func NewGatewayFromConfigMap(configMap *corev1.ConfigMap) (*Gateway, error) {
 	c := Gateway{Gateways: map[v1alpha1.IngressVisibility]*GatewayConfig{}}
 
 	for key, value := range entry {
-		key, value = key, value
+		key, value := key, value
 		// Check that the visibility makes sense.
 		switch key {
 		case v1alpha1.IngressVisibilityClusterLocal, v1alpha1.IngressVisibilityExternalIP:
