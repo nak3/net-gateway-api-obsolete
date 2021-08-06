@@ -34,17 +34,17 @@ data:
     #
     # visibility: |
     #   <visibility>: |
-    #     gatewayClass: <GatewayClass Name>
-    #     namespace: <Namespace to deploy Gateway>
-    #     address: <Service address for Gateway>
+    #     gatewayClass: GatewayClass Name
+    #     gateway: the namespace/name of Gateway
+    #     service: the namespace/name of Service for the Gateway
     #
     # The gateway configuration for the default visibility.
     visibility: |
       ExternalIP:
-        gatewayClass: istio
-        namespace: istio-system
-        address: istio-ingressgateway.istio-system
+        class: istio
+        gateway: istio-system/test-gateway
+        service: istio-system/istio-ingressgateway
       ClusterLocal:
-        gatewayClass: istio
-        namespace: istio-system
-        address: knative-local-gateway.istio-system
+        class: istio
+        gateway: istio-system/test-locla-gateway
+        service: istio-system/knative-local-gateway

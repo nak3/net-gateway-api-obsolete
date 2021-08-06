@@ -22,7 +22,7 @@ import (
 
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/tools/cache"
 	gatewayv1alpha1 "sigs.k8s.io/gateway-api/apis/v1alpha1"
 
 	"knative.dev/networking/pkg/apis/networking/v1alpha1"
@@ -30,9 +30,9 @@ import (
 	"knative.dev/networking/pkg/ingress"
 	"knative.dev/networking/pkg/status"
 	"knative.dev/pkg/logging"
+	"knative.dev/pkg/network"
 	pkgreconciler "knative.dev/pkg/reconciler"
 	"knative.dev/pkg/tracker"
-	"knative.dev/serving/pkg/apis/serving"
 
 	gwapiclientset "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/clientset/versioned"
 	gwlisters "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/listers/apis/v1alpha1"
@@ -56,32 +56,11 @@ type Reconciler struct {
 
 	// Listers index properties about resources
 	httprouteLister gwlisters.HTTPRouteLister
-	gatewayLister   gwlisters.GatewayLister
 }
 
 var (
 	_ ingressreconciler.Interface = (*Reconciler)(nil)
-	_ ingressreconciler.Finalizer = (*Reconciler)(nil)
 )
-
-// FinalizeKind finalizes ingress resource.
-func (c *Reconciler) FinalizeKind(ctx context.Context, ingress *v1alpha1.Ingress) pkgreconciler.Event {
-	gws, err := c.gatewayLister.List(labels.SelectorFromSet(map[string]string{
-		serving.RouteNamespaceLabelKey: ingress.GetNamespace(),
-		serving.RouteLabelKey:          ingress.GetName(),
-	}))
-	if err != nil {
-		return err
-	}
-
-	for _, gw := range gws {
-		err := c.gwapiclient.NetworkingV1alpha1().Gateways(gw.Namespace).Delete(ctx, gw.Name, metav1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 // ReconcileKind implements Interface.ReconcileKind.
 func (c *Reconciler) ReconcileKind(ctx context.Context, ingress *v1alpha1.Ingress) pkgreconciler.Event {
@@ -117,13 +96,8 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 
 	for _, rule := range ing.Spec.Rules {
 		rule := rule
-		gateway, err := c.reconcileGateway(ctx, ing, &rule)
-		if err != nil {
-			return err
-		}
-		logger.Infof("Gateway successfully synced %v", gateway)
 
-		httproutes, err := c.reconcileHTTPRoute(ctx, ing, &rule, *gateway)
+		httproutes, err := c.reconcileHTTPRoute(ctx, ing, &rule)
 		if err != nil {
 			return err
 		}
@@ -149,11 +123,14 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 	if ready {
 		gatewayConfig := config.FromContext(ctx).Gateway
 
+		ns, name, _ := cache.SplitMetaNamespaceKey(gatewayConfig.LookupService(v1alpha1.IngressVisibilityExternalIP))
 		publicLbs := []v1alpha1.LoadBalancerIngressStatus{
-			{DomainInternal: gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityExternalIP)},
+			{DomainInternal: network.GetServiceHostname(name, ns)},
 		}
+
+		ns, name, _ = cache.SplitMetaNamespaceKey(gatewayConfig.LookupService(v1alpha1.IngressVisibilityClusterLocal))
 		privateLbs := []v1alpha1.LoadBalancerIngressStatus{
-			{DomainInternal: gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityClusterLocal)},
+			{DomainInternal: network.GetServiceHostname(name, ns)},
 		}
 
 		ing.Status.MarkLoadBalancerReady(publicLbs, privateLbs)

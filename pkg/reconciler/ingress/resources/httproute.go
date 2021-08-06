@@ -17,45 +17,52 @@ limitations under the License.
 package resources
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/utils/pointer"
 	gwv1alpha1 "sigs.k8s.io/gateway-api/apis/v1alpha1"
 
-	"knative.dev/networking/pkg/apis/networking"
+	"knative.dev/networking/pkg"
 	netv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/pkg/kmeta"
+
+	"github.com/nak3/net-gateway-api/pkg/reconciler/ingress/config"
 )
 
 // MakeHTTPRoute creates HTTPRoute to set up routing rules.
 func MakeHTTPRoute(
+	ctx context.Context,
 	ing *netv1alpha1.Ingress,
 	rule *netv1alpha1.IngressRule,
-	gateway gwv1alpha1.Gateway,
 ) (*gwv1alpha1.HTTPRoute, error) {
+
+	visibility := ""
+	if rule.Visibility == netv1alpha1.IngressVisibilityClusterLocal {
+		visibility = "cluster-local"
+	}
 
 	return &gwv1alpha1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      LongestHost(rule.Hosts),
 			Namespace: ing.Namespace,
 			Labels: kmeta.UnionMaps(ing.Labels, map[string]string{
-				HTTPRouteNamespaceLabelKey: ing.Namespace,
-				HTTPRouteVisibilityKey:     Visibility(rule.Visibility),
-				// Do not usee HTTPRoute name as it exceeds 63 byte.
-				networking.IngressLabelKey: ing.Name,
+				pkg.VisibilityLabelKey: visibility,
 			}),
 			Annotations: kmeta.FilterMap(ing.GetAnnotations(), func(key string) bool {
 				return key == corev1.LastAppliedConfigAnnotation
 			}),
 			OwnerReferences: []metav1.OwnerReference{*kmeta.NewControllerRef(ing)},
 		},
-		Spec: makeHTTPRouteSpec(rule, gateway),
+		Spec: makeHTTPRouteSpec(ctx, rule),
 	}, nil
 }
 
 func makeHTTPRouteSpec(
+	ctx context.Context,
 	rule *netv1alpha1.IngressRule,
-	gateway gwv1alpha1.Gateway,
 ) gwv1alpha1.HTTPRouteSpec {
 
 	hostnames := []gwv1alpha1.Hostname{}
@@ -65,9 +72,12 @@ func makeHTTPRouteSpec(
 
 	rules := makeHTTPRouteRule(rule)
 
+	gatewayConfig := config.FromContext(ctx).Gateway
+	ns, name, _ := cache.SplitMetaNamespaceKey(gatewayConfig.LookupGateway(rule.Visibility))
+
 	gatewayRef := gwv1alpha1.GatewayReference{
-		Namespace: gateway.Namespace,
-		Name:      gateway.Name,
+		Namespace: ns,
+		Name:      name,
 	}
 
 	return gwv1alpha1.HTTPRouteSpec{
