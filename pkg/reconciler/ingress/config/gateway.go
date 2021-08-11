@@ -24,8 +24,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"knative.dev/networking/pkg/apis/networking/v1alpha1"
-	//	"knative.dev/pkg/configmap"
-	"knative.dev/pkg/network"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -34,30 +32,28 @@ const (
 	// GatewayConfigName is the config map name for the gateway configuration.
 	GatewayConfigName = "config-gateway"
 
-	// DefaultGatewayClass is the gatewayclass name for the gateway.
-	DefaultGatewayClass = "istio"
-
-	// DefaultIstioNamespace is the default namespace for the gateway.
-	// The namespace of the gateway should not be required,
-	// but gateway-api with Istio needs to deploy Gateway in the same namespace with istio service.
-	DefaultIstioNamespace = "istio-system"
-
 	visibilityConfigKey = "visibility"
-)
 
-var (
-	// DefaultLocalGatewayService holds the default local gateway service address.
-	// Placeholder service points to the service.
-	DefaultLocalGatewayService = "knative-local-gateway.istio-system.svc." + network.GetClusterDomainName()
+	// defaultGatewayClass is the gatewayclass name for the gateway.
+	defaultGatewayClass = "istio"
 
-	// DefaultPublicGatewayService is the default gateway service address.
-	DefaultPublicGatewayService = "istio-ingressgateway.istio-system.svc." + network.GetClusterDomainName()
+	// defaultIstioGateway is the default gateway.
+	defaultIstioGateway = "istio-system/test-gateway"
+
+	// defaultIstioLocalGateway is the default local gateway:
+	defaultIstioLocalGateway = "istio-system/test-local-gateway"
+
+	// defaultLocalGatewayService holds the default local gateway service.
+	defaultLocalGatewayService = "istio-system/knative-local-gateway"
+
+	// defaultGatewayService is the default gateway service.
+	defaultGatewayService = "istio-system/istio-ingressgateway"
 )
 
 type GatewayConfig struct {
-	GatewayClass string `json:"gatewayClass,omitempty"`
-	Namespace    string `json:"namespace,omitempty"`
-	Address      string `json:"address,omitempty"`
+	GatewayClass string `json:"class,omitempty"`
+	Gateway      string `json:"gateway,omitempty"`
+	Service      string `json:"service,omitempty"`
 }
 
 // Gateway maps gateways to routes by matching the gateway's
@@ -77,8 +73,8 @@ func NewGatewayFromConfigMap(configMap *corev1.ConfigMap) (*Gateway, error) {
 		// These are the defaults.
 		return &Gateway{
 			Gateways: map[v1alpha1.IngressVisibility]*GatewayConfig{
-				v1alpha1.IngressVisibilityExternalIP:   {GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultPublicGatewayService},
-				v1alpha1.IngressVisibilityClusterLocal: {GatewayClass: DefaultGatewayClass, Namespace: DefaultIstioNamespace, Address: DefaultLocalGatewayService},
+				v1alpha1.IngressVisibilityExternalIP:   {GatewayClass: defaultGatewayClass, Gateway: defaultIstioGateway, Service: defaultGatewayService},
+				v1alpha1.IngressVisibilityClusterLocal: {GatewayClass: defaultGatewayClass, Gateway: defaultIstioLocalGateway, Service: defaultLocalGatewayService},
 			},
 		}, nil
 	}
@@ -93,7 +89,7 @@ func NewGatewayFromConfigMap(configMap *corev1.ConfigMap) (*Gateway, error) {
 		v1alpha1.IngressVisibilityExternalIP,
 	} {
 		if _, ok := entry[vis]; !ok {
-			return nil, fmt.Errorf("visibility must contain %q with class and service", vis)
+			return nil, fmt.Errorf("visibility %q must not be empty", vis)
 		}
 	}
 	c := Gateway{Gateways: map[v1alpha1.IngressVisibility]*GatewayConfig{}}
@@ -108,36 +104,45 @@ func NewGatewayFromConfigMap(configMap *corev1.ConfigMap) (*Gateway, error) {
 		}
 
 		// See if the Service is a valid namespace/name token.
-		if _, _, err := cache.SplitMetaNamespaceKey(value.Address); err != nil {
+		if _, _, err := cache.SplitMetaNamespaceKey(value.Service); err != nil {
 			return nil, err
 		}
+
+		// See if the Gateway is a valid namespace/name token.
+		if _, _, err := cache.SplitMetaNamespaceKey(value.Gateway); err != nil {
+			return nil, err
+		}
+
+		if value.GatewayClass == "" {
+			// TODO: set default instead of error?
+			return nil, fmt.Errorf("visibility %q must set class", key)
+		}
+
 		c.Gateways[key] = &value
 	}
 	return &c, nil
 }
 
-// LookupGatewayNamespace returns a gateway namespace given a visibility config.
-func (c *Gateway) LookupGatewayNamespace(visibility v1alpha1.IngressVisibility) string {
+// LookupGateway returns a gateway given a visibility config.
+func (c *Gateway) LookupGateway(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
 		return ""
 	}
-	return c.Gateways[visibility].Namespace
+	return c.Gateways[visibility].Gateway
 }
 
 // LookupGatewayClass returns a gatewayclass given a visibility config.
 func (c *Gateway) LookupGatewayClass(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
-		// TODO: empty gatewayclass should be error?
 		return ""
 	}
 	return c.Gateways[visibility].GatewayClass
 }
 
-// LookupAddress returns a gateway address given a visibility config.
-// TODO: LookupGatewayServiceAddress ?
-func (c *Gateway) LookupAddress(visibility v1alpha1.IngressVisibility) string {
+// LookupService returns a gateway service address given a visibility config.
+func (c *Gateway) LookupService(visibility v1alpha1.IngressVisibility) string {
 	if c.Gateways[visibility] == nil {
 		return ""
 	}
-	return c.Gateways[visibility].Address
+	return c.Gateways[visibility].Service
 }

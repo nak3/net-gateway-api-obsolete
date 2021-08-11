@@ -17,6 +17,7 @@ limitations under the License.
 package resources
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,33 +27,37 @@ import (
 	"knative.dev/networking/pkg/apis/networking"
 	"knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/pkg/kmeta"
+	"knative.dev/pkg/reconciler"
 	gwv1alpha1 "sigs.k8s.io/gateway-api/apis/v1alpha1"
+
+	"github.com/nak3/net-gateway-api/pkg/reconciler/ingress/config"
+)
+
+const (
+	testNamespace    = "test-ns"
+	testIngressName  = "test-ingress"
+	testGatewayClass = "test-class"
 )
 
 var (
-	testGateway = gwv1alpha1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        LongestHost(testHosts),
-			Namespace:   testNamespace,
-			Labels:      map[string]string{networking.IngressLabelKey: testIngressName},
-			Annotations: map[string]string{},
-		},
+	externalHost      = gwv1alpha1.Hostname(testHosts[0])
+	localHostShortest = gwv1alpha1.Hostname(testLocalHosts[0])
+	localHostShort    = gwv1alpha1.Hostname(testLocalHosts[1])
+	localHostFull     = gwv1alpha1.Hostname(testLocalHosts[2])
+
+	testLocalHosts = []string{
+		"hello-example.default",
+		"hello-example.default.svc",
+		"hello-example.default.svc.cluster.local",
 	}
-	testLocalGateway = gwv1alpha1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        LongestHost(testLocalHosts),
-			Namespace:   testNamespace,
-			Labels:      map[string]string{networking.IngressLabelKey: testIngressName},
-			Annotations: map[string]string{},
-		},
-	}
+
+	testHosts = []string{"hello-example.default.example.com"}
 )
 
 func TestMakeHTTPRoute(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		ci       *v1alpha1.Ingress
-		gw       []gwv1alpha1.Gateway
 		expected []*gwv1alpha1.HTTPRoute
 	}{
 		{
@@ -130,16 +135,14 @@ func TestMakeHTTPRoute(t *testing.T) {
 						},
 					}},
 			},
-			gw: []gwv1alpha1.Gateway{testGateway, testLocalGateway},
 			expected: []*gwv1alpha1.HTTPRoute{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      LongestHost(testHosts),
 						Namespace: testNamespace,
 						Labels: map[string]string{
-							networking.IngressLabelKey: testIngressName,
-							HTTPRouteNamespaceLabelKey: testNamespace,
-							HTTPRouteVisibilityKey:     "",
+							networking.IngressLabelKey:          testIngressName,
+							"networking.knative.dev/visibility": "",
 						},
 						Annotations: map[string]string{},
 					},
@@ -183,8 +186,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 						Gateways: gwv1alpha1.RouteGateways{
 							Allow: gwv1alpha1.GatewayAllowFromList,
 							GatewayRefs: []gwv1alpha1.GatewayReference{{
-								Namespace: testNamespace,
-								Name:      LongestHost(testHosts),
+								Namespace: "test-ns",
+								Name:      "foo",
 							}},
 						},
 					},
@@ -193,9 +196,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 						Name:      LongestHost(testLocalHosts),
 						Namespace: testNamespace,
 						Labels: map[string]string{
-							networking.IngressLabelKey: testIngressName,
-							HTTPRouteNamespaceLabelKey: testNamespace,
-							HTTPRouteVisibilityKey:     "cluster-local",
+							networking.IngressLabelKey:          testIngressName,
+							"networking.knative.dev/visibility": "cluster-local",
 						},
 						Annotations: map[string]string{},
 					},
@@ -239,8 +241,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 						Gateways: gwv1alpha1.RouteGateways{
 							Allow: gwv1alpha1.GatewayAllowFromList,
 							GatewayRefs: []gwv1alpha1.GatewayReference{{
-								Namespace: testNamespace,
-								Name:      LongestHost(testLocalHosts),
+								Namespace: "test-ns",
+								Name:      "foo-local",
 							}},
 						},
 					},
@@ -291,15 +293,13 @@ func TestMakeHTTPRoute(t *testing.T) {
 					},
 				}}},
 			},
-			gw: []gwv1alpha1.Gateway{testGateway},
 			expected: []*gwv1alpha1.HTTPRoute{{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      LongestHost(testHosts),
 					Namespace: testNamespace,
 					Labels: map[string]string{
-						networking.IngressLabelKey: testIngressName,
-						HTTPRouteNamespaceLabelKey: testNamespace,
-						HTTPRouteVisibilityKey:     "",
+						networking.IngressLabelKey:          testIngressName,
+						"networking.knative.dev/visibility": "",
 					},
 					Annotations: map[string]string{},
 				},
@@ -355,8 +355,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 					Gateways: gwv1alpha1.RouteGateways{
 						Allow: gwv1alpha1.GatewayAllowFromList,
 						GatewayRefs: []gwv1alpha1.GatewayReference{{
-							Namespace: testNamespace,
-							Name:      LongestHost(testHosts),
+							Namespace: "test-ns",
+							Name:      "foo",
 						}},
 					},
 				},
@@ -388,15 +388,13 @@ func TestMakeHTTPRoute(t *testing.T) {
 					},
 				}}},
 			},
-			gw: []gwv1alpha1.Gateway{testGateway},
 			expected: []*gwv1alpha1.HTTPRoute{{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      LongestHost(testHosts),
 					Namespace: testNamespace,
 					Labels: map[string]string{
-						networking.IngressLabelKey: testIngressName,
-						HTTPRouteNamespaceLabelKey: testNamespace,
-						HTTPRouteVisibilityKey:     "",
+						networking.IngressLabelKey:          testIngressName,
+						"networking.knative.dev/visibility": "",
 					},
 					Annotations: map[string]string{},
 				},
@@ -429,8 +427,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 					Gateways: gwv1alpha1.RouteGateways{
 						Allow: gwv1alpha1.GatewayAllowFromList,
 						GatewayRefs: []gwv1alpha1.GatewayReference{{
-							Namespace: testNamespace,
-							Name:      LongestHost(testHosts),
+							Namespace: "test-ns",
+							Name:      "foo",
 						}},
 					},
 				},
@@ -439,7 +437,10 @@ func TestMakeHTTPRoute(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for i, rule := range tc.ci.Spec.Rules {
 				rule := rule
-				route, err := MakeHTTPRoute(tc.ci, &rule, tc.gw[i])
+				tcs := &testConfigStore{config: testConfig}
+				ctx := tcs.ToContext(context.Background())
+
+				route, err := MakeHTTPRoute(ctx, tc.ci, &rule)
 				if err != nil {
 					t.Fatal("MakeHTTPRoute failed:", err)
 				}
@@ -451,3 +452,27 @@ func TestMakeHTTPRoute(t *testing.T) {
 		})
 	}
 }
+
+type testConfigStore struct {
+	config *config.Config
+}
+
+func (t *testConfigStore) ToContext(ctx context.Context) context.Context {
+	return config.ToContext(ctx, t.config)
+}
+
+var testConfig = &config.Config{
+	Gateway: &config.Gateway{
+		Gateways: map[v1alpha1.IngressVisibility]*config.GatewayConfig{
+			v1alpha1.IngressVisibilityExternalIP: {
+				GatewayClass: testGatewayClass,
+				Gateway:      "test-ns/foo",
+			},
+			v1alpha1.IngressVisibilityClusterLocal: {
+				GatewayClass: testGatewayClass,
+				Gateway:      "test-ns/foo-local",
+			},
+		}},
+}
+
+var _ reconciler.ConfigStore = (*testConfigStore)(nil)

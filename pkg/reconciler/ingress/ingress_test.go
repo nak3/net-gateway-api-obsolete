@@ -53,7 +53,6 @@ func TestReconcile(t *testing.T) {
 			gwapiclient: fakegwapiclientset.Get(ctx),
 			// Listers index properties about resources
 			httprouteLister: listers.GetHTTPRouteLister(),
-			gatewayLister:   listers.GetGatewayLister(),
 			tracker:         &NullTracker{},
 			statusManager: &fakeStatusManager{
 				FakeIsReady: func(context.Context, *v1alpha1.Ingress) (bool, error) {
@@ -96,7 +95,7 @@ var (
 			Gateways: map[v1alpha1.IngressVisibility]*config.GatewayConfig{
 				v1alpha1.IngressVisibilityExternalIP: {},
 				v1alpha1.IngressVisibilityClusterLocal: {
-					Address: "knative-local-gateway.istio-system",
+					Service: "istio-system/knative-local-gateway",
 				}},
 		},
 	}

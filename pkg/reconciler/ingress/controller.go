@@ -57,7 +57,6 @@ func NewController(
 	c := &Reconciler{
 		gwapiclient:     gwapiclient.Get(ctx),
 		httprouteLister: httprouteInformer.Lister(),
-		gatewayLister:   gatewayInformer.Lister(),
 	}
 
 	impl := ingressreconciler.NewImpl(ctx, c, GatewayAPIIngressClassName, func(impl *controller.Impl) controller.Options {

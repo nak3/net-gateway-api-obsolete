@@ -20,11 +20,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/sets"
 	corev1listers "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/networking/pkg/status"
 
@@ -54,11 +54,9 @@ type gatewayPodTargetLister struct {
 
 func (l *gatewayPodTargetLister) ListProbeTargets(ctx context.Context, ing *v1alpha1.Ingress) ([]status.ProbeTarget, error) {
 	gatewayConfig := config.FromContext(ctx).Gateway
-	svc := strings.Split(gatewayConfig.LookupAddress(v1alpha1.IngressVisibilityClusterLocal), ".")
-	if len(svc) < 2 {
-		return nil, fmt.Errorf("failed to parse service")
-	}
-	eps, err := l.endpointsLister.Endpoints(svc[1]).Get(svc[0])
+	ns, name, _ := cache.SplitMetaNamespaceKey(gatewayConfig.LookupService(v1alpha1.IngressVisibilityClusterLocal))
+
+	eps, err := l.endpointsLister.Endpoints(ns).Get(name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal service: %w", err)
 	}

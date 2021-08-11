@@ -95,11 +95,6 @@ func (l *Listers) GetHTTPRouteLister() gwlisters.HTTPRouteLister {
 	return gwlisters.NewHTTPRouteLister(l.IndexerFor(&gwv1alpha1.HTTPRoute{}))
 }
 
-// GetGatewayLister get lister for HTTPProxy resource.
-func (l *Listers) GetGatewayLister() gwlisters.GatewayLister {
-	return gwlisters.NewGatewayLister(l.IndexerFor(&gwv1alpha1.Gateway{}))
-}
-
 // GetEndpointsLister get lister for K8s Endpoints resource.
 func (l *Listers) GetEndpointsLister() corev1listers.EndpointsLister {
 	return corev1listers.NewEndpointsLister(l.IndexerFor(&corev1.Endpoints{}))
