@@ -34,6 +34,10 @@ func Visibility(visibility netv1alpha1.IngressVisibility) string {
 	return ""
 }
 
+func gatewayAllowTypePtr(val gwv1alpha1.GatewayAllowType) *gwv1alpha1.GatewayAllowType {
+	return &val
+}
+
 func headerMatchTypePtr(val gwv1alpha1.HeaderMatchType) *gwv1alpha1.HeaderMatchType {
 	return &val
 }
