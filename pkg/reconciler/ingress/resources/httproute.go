@@ -83,8 +83,8 @@ func makeHTTPRouteSpec(
 	return gwv1alpha1.HTTPRouteSpec{
 		Hostnames: hostnames,
 		Rules:     rules,
-		Gateways: gwv1alpha1.RouteGateways{
-			Allow:       gwv1alpha1.GatewayAllowFromList,
+		Gateways: &gwv1alpha1.RouteGateways{
+			Allow:       gatewayAllowTypePtr(gwv1alpha1.GatewayAllowFromList),
 			GatewayRefs: []gwv1alpha1.GatewayReference{gatewayRef},
 		},
 	}
@@ -114,7 +114,7 @@ func makeHTTPRouteRule(rule *netv1alpha1.IngressRule) []gwv1alpha1.HTTPRouteRule
 			forward := gwv1alpha1.HTTPRouteForwardTo{
 				Port:        portNumPtr(split.ServicePort.IntValue()),
 				ServiceName: &name,
-				Weight:      int32(split.Percent),
+				Weight:      pointer.Int32Ptr(int32(split.Percent)),
 				Filters: []gwv1alpha1.HTTPRouteFilter{{
 					Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 					RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -129,8 +129,8 @@ func makeHTTPRouteRule(rule *netv1alpha1.IngressRule) []gwv1alpha1.HTTPRouteRule
 			pathPrefix = path.Path
 		}
 		pathMatch := gwv1alpha1.HTTPPathMatch{
-			Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-			Value: *pointer.StringPtr(pathPrefix),
+			Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+			Value: pointer.StringPtr(pathPrefix),
 		}
 
 		var headersMatch *gwv1alpha1.HTTPHeaderMatch
@@ -140,12 +140,12 @@ func makeHTTPRouteRule(rule *netv1alpha1.IngressRule) []gwv1alpha1.HTTPRouteRule
 				header[k] = v.Exact
 			}
 			headersMatch = &gwv1alpha1.HTTPHeaderMatch{
-				Type:   *headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
+				Type:   headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
 				Values: header,
 			}
 		}
 
-		matches := []gwv1alpha1.HTTPRouteMatch{{Path: pathMatch, Headers: headersMatch}}
+		matches := []gwv1alpha1.HTTPRouteMatch{{Path: &pathMatch, Headers: headersMatch}}
 
 		rule := gwv1alpha1.HTTPRouteRule{
 			ForwardTo: forwards,

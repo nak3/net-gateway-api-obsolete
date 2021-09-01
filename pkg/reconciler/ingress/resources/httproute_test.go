@@ -152,7 +152,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							ForwardTo: []gwv1alpha1.HTTPRouteForwardTo{{
 								Port:        portNumPtr(123),
 								ServiceName: stringPtr("goo"),
-								Weight:      int32(12),
+								Weight:      pointer.Int32Ptr(int32(12)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -164,7 +164,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							}, {
 								Port:        portNumPtr(124),
 								ServiceName: stringPtr("doo"),
-								Weight:      int32(88),
+								Weight:      pointer.Int32Ptr(int32(88)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -178,13 +178,13 @@ func TestMakeHTTPRoute(t *testing.T) {
 								RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
 									Set: map[string]string{"Foo": "bar"},
 								}}},
-							Matches: []gwv1alpha1.HTTPRouteMatch{{Path: gwv1alpha1.HTTPPathMatch{
-								Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-								Value: *pointer.StringPtr("/"),
+							Matches: []gwv1alpha1.HTTPRouteMatch{{Path: &gwv1alpha1.HTTPPathMatch{
+								Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+								Value: pointer.StringPtr("/"),
 							}}},
 						}},
-						Gateways: gwv1alpha1.RouteGateways{
-							Allow: gwv1alpha1.GatewayAllowFromList,
+						Gateways: &gwv1alpha1.RouteGateways{
+							Allow: gatewayAllowTypePtr(gwv1alpha1.GatewayAllowFromList),
 							GatewayRefs: []gwv1alpha1.GatewayReference{{
 								Namespace: "test-ns",
 								Name:      "foo",
@@ -207,7 +207,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							ForwardTo: []gwv1alpha1.HTTPRouteForwardTo{{
 								Port:        portNumPtr(123),
 								ServiceName: stringPtr("goo"),
-								Weight:      int32(12),
+								Weight:      pointer.Int32Ptr(int32(12)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -219,7 +219,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							}, {
 								Port:        portNumPtr(124),
 								ServiceName: stringPtr("doo"),
-								Weight:      int32(88),
+								Weight:      pointer.Int32Ptr(int32(88)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -233,13 +233,13 @@ func TestMakeHTTPRoute(t *testing.T) {
 								RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
 									Set: map[string]string{"Foo": "bar"},
 								}}},
-							Matches: []gwv1alpha1.HTTPRouteMatch{{Path: gwv1alpha1.HTTPPathMatch{
-								Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-								Value: *pointer.StringPtr("/"),
+							Matches: []gwv1alpha1.HTTPRouteMatch{{Path: &gwv1alpha1.HTTPPathMatch{
+								Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+								Value: pointer.StringPtr("/"),
 							}}},
 						}},
-						Gateways: gwv1alpha1.RouteGateways{
-							Allow: gwv1alpha1.GatewayAllowFromList,
+						Gateways: &gwv1alpha1.RouteGateways{
+							Allow: gatewayAllowTypePtr(gwv1alpha1.GatewayAllowFromList),
 							GatewayRefs: []gwv1alpha1.GatewayReference{{
 								Namespace: "test-ns",
 								Name:      "foo-local",
@@ -310,7 +310,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							ForwardTo: []gwv1alpha1.HTTPRouteForwardTo{{
 								Port:        portNumPtr(123),
 								ServiceName: stringPtr("goo"),
-								Weight:      int32(100),
+								Weight:      pointer.Int32Ptr(int32(100)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -319,31 +319,31 @@ func TestMakeHTTPRoute(t *testing.T) {
 							}},
 							Matches: []gwv1alpha1.HTTPRouteMatch{
 								{
-									Path: gwv1alpha1.HTTPPathMatch{
-										Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-										Value: *pointer.StringPtr("/"),
+									Path: &gwv1alpha1.HTTPPathMatch{
+										Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+										Value: pointer.StringPtr("/"),
 									},
 									Headers: &gwv1alpha1.HTTPHeaderMatch{
-										Type:   *headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
+										Type:   headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
 										Values: map[string]string{"tag": "goo"},
 									},
 								}},
 						}, {
 							Matches: []gwv1alpha1.HTTPRouteMatch{
 								{
-									Path: gwv1alpha1.HTTPPathMatch{
-										Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-										Value: *pointer.StringPtr("/doo"),
+									Path: &gwv1alpha1.HTTPPathMatch{
+										Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+										Value: pointer.StringPtr("/doo"),
 									},
 									Headers: &gwv1alpha1.HTTPHeaderMatch{
-										Type:   *headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
+										Type:   headerMatchTypePtr(gwv1alpha1.HeaderMatchExact),
 										Values: map[string]string{"tag": "doo"},
 									},
 								}},
 							ForwardTo: []gwv1alpha1.HTTPRouteForwardTo{{
 								Port:        portNumPtr(124),
 								ServiceName: stringPtr("doo"),
-								Weight:      int32(100),
+								Weight:      pointer.Int32Ptr(int32(100)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -352,8 +352,8 @@ func TestMakeHTTPRoute(t *testing.T) {
 							}},
 						},
 					},
-					Gateways: gwv1alpha1.RouteGateways{
-						Allow: gwv1alpha1.GatewayAllowFromList,
+					Gateways: &gwv1alpha1.RouteGateways{
+						Allow: gatewayAllowTypePtr(gwv1alpha1.GatewayAllowFromList),
 						GatewayRefs: []gwv1alpha1.GatewayReference{{
 							Namespace: "test-ns",
 							Name:      "foo",
@@ -405,7 +405,7 @@ func TestMakeHTTPRoute(t *testing.T) {
 							ForwardTo: []gwv1alpha1.HTTPRouteForwardTo{{
 								Port:        portNumPtr(123),
 								ServiceName: stringPtr("goo"),
-								Weight:      int32(100),
+								Weight:      pointer.Int32Ptr(int32(100)),
 								Filters: []gwv1alpha1.HTTPRouteFilter{{
 									Type: gwv1alpha1.HTTPRouteFilterRequestHeaderModifier,
 									RequestHeaderModifier: &gwv1alpha1.HTTPRequestHeaderFilter{
@@ -417,15 +417,15 @@ func TestMakeHTTPRoute(t *testing.T) {
 							}},
 							Matches: []gwv1alpha1.HTTPRouteMatch{
 								{
-									Path: gwv1alpha1.HTTPPathMatch{
-										Type:  *pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
-										Value: *pointer.StringPtr("/"),
+									Path: &gwv1alpha1.HTTPPathMatch{
+										Type:  pathMatchTypePtr(gwv1alpha1.PathMatchPrefix),
+										Value: pointer.StringPtr("/"),
 									},
 								}},
 						},
 					},
-					Gateways: gwv1alpha1.RouteGateways{
-						Allow: gwv1alpha1.GatewayAllowFromList,
+					Gateways: &gwv1alpha1.RouteGateways{
+						Allow: gatewayAllowTypePtr(gwv1alpha1.GatewayAllowFromList),
 						GatewayRefs: []gwv1alpha1.GatewayReference{{
 							Namespace: "test-ns",
 							Name:      "foo",
