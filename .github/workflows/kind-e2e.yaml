@@ -128,7 +128,7 @@ jobs:
         set -o pipefail
 
         # gateway-api CRD must be installed before Istio.
-        kubectl apply -k 'github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.2.0'
+        kubectl apply -k 'github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.3.0'
 
         echo "GATEWAY_OVERRIDE=istio-ingressgateway" >> $GITHUB_ENV
         echo "GATEWAY_NAMESPACE_OVERRIDE=istio-system" >> $GITHUB_ENV
