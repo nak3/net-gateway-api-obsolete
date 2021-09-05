@@ -10,10 +10,10 @@ Knative Gateway API Controller is a controller to generate Gateway resources bas
 #### Deploy net-gateway-api CRD
 
 ```
-kubectl apply -k 'github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.2.0'
+kubectl apply -k 'github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.3.0'
 ```
 
-#### Install Istio (v1.10 or later)
+#### Install Istio (v1.11.x)
 
 ```
 istioctl install -y
