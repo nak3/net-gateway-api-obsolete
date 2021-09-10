@@ -18,8 +18,8 @@ require (
 	k8s.io/code-generator v0.21.4
 	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
 	knative.dev/hack v0.0.0-20210806075220-815cd312d65c
-	knative.dev/networking v0.0.0-20210831064556-e755cda9bb52
-	knative.dev/pkg v0.0.0-20210830224055-82f3a9f1c5bc
+	knative.dev/networking v0.0.0-20210909132459-78c491e7b7f0
+	knative.dev/pkg v0.0.0-20210909165259-d4505c660535
 	sigs.k8s.io/gateway-api v0.3.0
 	sigs.k8s.io/yaml v1.2.0
 )
