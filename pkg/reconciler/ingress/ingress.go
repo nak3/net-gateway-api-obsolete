@@ -32,7 +32,6 @@ import (
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/network"
 	pkgreconciler "knative.dev/pkg/reconciler"
-	"knative.dev/pkg/tracker"
 
 	gwapiclientset "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/clientset/versioned"
 	gwlisters "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/listers/apis/v1alpha1"
@@ -49,7 +48,6 @@ const (
 
 // Reconciler implements controller.Reconciler for Route resources.
 type Reconciler struct {
-	tracker       tracker.Interface
 	statusManager status.Manager
 
 	gwapiclient gwapiclientset.Interface

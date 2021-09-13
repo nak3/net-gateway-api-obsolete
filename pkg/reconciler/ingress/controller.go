@@ -33,7 +33,6 @@ import (
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/reconciler"
-	"knative.dev/pkg/tracker"
 
 	gwapiclient "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/injection/client"
 	gatewayinformer "github.com/nak3/net-gateway-api/pkg/client/gatewayapi/injection/informers/apis/v1alpha1/gateway"
@@ -59,6 +58,8 @@ func NewController(
 		httprouteLister: httprouteInformer.Lister(),
 	}
 
+	filterFunc := reconciler.AnnotationFilterFunc(networking.IngressClassAnnotationKey, GatewayAPIIngressClassName, true)
+
 	impl := ingressreconciler.NewImpl(ctx, c, GatewayAPIIngressClassName, func(impl *controller.Impl) controller.Options {
 		configsToResync := []interface{}{
 			&network.Config{},
@@ -69,11 +70,11 @@ func NewController(
 		})
 		configStore := config.NewStore(logging.WithLogger(ctx, logger.Named("config-store")), resync)
 		configStore.WatchConfigs(cmw)
-		return controller.Options{ConfigStore: configStore}
+		return controller.Options{
+			ConfigStore:       configStore,
+			PromoteFilterFunc: filterFunc,
+		}
 	})
-
-	//TODO:
-	filterFunc := reconciler.AnnotationFilterFunc(networking.IngressClassAnnotationKey, GatewayAPIIngressClassName, true)
 
 	logger.Info("Setting up Ingress event handlers")
 	ingressHandler := cache.FilteringResourceEventHandler{
@@ -102,12 +103,9 @@ func NewController(
 	c.statusManager = statusProber
 	statusProber.Start(ctx.Done())
 
-	tracker := tracker.New(impl.EnqueueKey, controller.GetTrackerLease(ctx))
-	c.tracker = tracker
-
 	// Make sure trackers are deleted once the observers are removed.
 	ingressInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		DeleteFunc: tracker.OnDeletedObserver,
+		DeleteFunc: impl.Tracker.OnDeletedObserver,
 	})
 
 	return impl

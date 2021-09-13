@@ -53,7 +53,6 @@ func TestReconcile(t *testing.T) {
 			gwapiclient: fakegwapiclientset.Get(ctx),
 			// Listers index properties about resources
 			httprouteLister: listers.GetHTTPRouteLister(),
-			tracker:         &NullTracker{},
 			statusManager: &fakeStatusManager{
 				FakeIsReady: func(context.Context, *v1alpha1.Ingress) (bool, error) {
 					return false, theError
