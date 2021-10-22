@@ -38,10 +38,10 @@ const (
 	defaultGatewayClass = "istio"
 
 	// defaultIstioGateway is the default gateway.
-	defaultIstioGateway = "istio-system/test-gateway"
+	defaultIstioGateway = "istio-system/knative-gateway"
 
 	// defaultIstioLocalGateway is the default local gateway:
-	defaultIstioLocalGateway = "istio-system/test-local-gateway"
+	defaultIstioLocalGateway = "istio-system/knative-local-gateway"
 
 	// defaultLocalGatewayService holds the default local gateway service.
 	defaultLocalGatewayService = "istio-system/knative-local-gateway"
